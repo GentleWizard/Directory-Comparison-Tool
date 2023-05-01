@@ -30,6 +30,8 @@ To use this script, follow these steps:
 
 5. The script will print a list of the files that are unique to each directory.
 
+Alternatively, you can simply launch the compare.py file and follow the prompts from the command line.
+
 ## License
 
 This project is licensed under the terms of the MIT license. See the [LICENSE](LICENSE) file for details.
