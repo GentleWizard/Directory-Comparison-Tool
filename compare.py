@@ -1,24 +1,12 @@
 import os
-import time
-from tkinter import filedialog, Tk
+from tkinter import filedialog
 
 # Welcome message
-print('Welcome! Pick two directories to compare the contents of!')
-print()
-
-# Wait for user input
-input('Press ENTER to start...')
-
-print("\n--------------------------\n")
-
-# Create an instance of Tkinter
-root = Tk()
-root.withdraw()
+print('Welcome! \nPick two directories to compare the contents of.\n')
 
 # Open a folder selection dialog for dir1 and print the selected directory
 dir1 = filedialog.askdirectory()
 print(f"Directory one: {dir1}")
-time.sleep(1)
 
 # Open a folder selection dialog for dir2 and print the selected directory
 dir2 = filedialog.askdirectory()
@@ -36,25 +24,24 @@ if dir1 == dir2:
     input('press ENTER to exit...')
     exit()
 
-if not (os.access(dir1, os.R_OK)):
-    print('error: Cannot access dir 1.')
-    input('press ENTER to exit...')
-    exit()
-if not (os.access(dir2, os.R_OK)):
-    print('error: Cannot access dir 2.')
-    print('Press ENTER to exit...')
-    exit()
+# Check if the two directories exist and exit if they don't
+def check_dir_access(directory, dir_number):
+    if not os.access(directory, os.R_OK):
+        print(f'error: Cannot access dir {dir_number}.')
+        input('Press ENTER to exit...')
+        exit()
 
-# Get a list of the files in each directory
-files1 = [f for f in os.listdir(dir1) if os.path.isfile(os.path.join(dir1, f))]
-files2 = [f for f in os.listdir(dir2) if os.path.isfile(os.path.join(dir2, f))]
+check_dir_access(dir1, 1)
+check_dir_access(dir2, 2)
 
+def create_file_set(directory):
+    with os.scandir(directory) as dir:
+        return {file.name for file in dir if file.is_file()}
+    
+list1 = create_file_set(dir1)
+list2 = create_file_set(dir2)
 
-# Create a set for each directory
-list1 = set(files1)
-list2 = set(files2)
-
-if len(list1) or len(list2) == 0:
+if not list1 or not list2:
     print('Information: No files exist in one of the directories, nothing to compare too.')
     input('Press ENTER to exit...')
     exit()
@@ -73,9 +60,7 @@ diff = list1.symmetric_difference(list2)
 numdif = len(diff)
 
 # Print the number of files and the names of the files that are unique to each set
-time.sleep(1)
 print(f"There are {numdif} files that are different: {diff}")
 
 # Wait for user input to exit
-print()
-input("Press ENTER to exit...")
+input("\nPress ENTER to exit...")
