@@ -14,8 +14,8 @@ def check_dir_access(directory):
 
 def create_file_set(directory):
 	file_set = set()
-	with os.scandir(directory) as _dir:
-		for file in _dir:
+	with os.scandir(directory) as dir:
+		for file in dir:
 			if file.is_file():
 				file_set.add(file.name)
 	return file_set
@@ -128,8 +128,7 @@ class FoldersToCompare(ctk.CTkFrame):
 		self.master.results.set_total_files(total_files)
 		self.master.results.set_time_taken(total_time)
 
-	@staticmethod
-	def browse(entry):
+	def browse(self, entry):
 		file = filedialog.askdirectory()
 		entry.set(file)
 
@@ -147,10 +146,8 @@ class Results(ctk.CTkFrame):
 		self.time_taken_label.pack(padx=(5, 10), pady=0, anchor="w")
 
 		self.total_different_files = 0
-		self.total_different_files_label = ctk.CTkLabel(
-			self.information,
-			text=f"Total Different Files: {self.total_different_files}"
-		)
+		self.total_different_files_label = ctk.CTkLabel(self.information,
+														text=f"Total Different Files: {self.total_different_files}")
 		self.total_different_files_label.pack(padx=(5, 10), pady=(2, 0), anchor="w")
 
 		self.total_files = 0
@@ -180,8 +177,8 @@ class Results(ctk.CTkFrame):
 		self.total_files = number
 		self.total_files_label.configure(text=f"Total Files: {self.total_files}")
 
-	def set_time_taken(self, time_taken):
-		self.time_taken = time_taken
+	def set_time_taken(self, time):
+		self.time_taken = time
 		self.time_taken_label.configure(text=f"Time Taken: {self.time_taken}")
 
 	def reset_everything(self):
