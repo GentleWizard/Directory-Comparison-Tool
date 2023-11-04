@@ -14,44 +14,11 @@ def check_dir_access(directory):
 
 def create_file_set(directory):
 	file_set = set()
-	with os.scandir(directory) as dir:
-		for file in dir:
+	with os.scandir(directory) as _dir:
+		for file in _dir:
 			if file.is_file():
 				file_set.add(file.name)
 	return file_set
-
-
-import queue
-import threading
-
-
-class ThreadedWorker:
-	def __init__(self):
-		self.queue = queue.Queue()
-		self.thread = threading.Thread(target=self.process_queue)
-		self.thread.daemon = True
-		self.thread.start()
-
-	def start_task(self, func, *args, **kwargs):
-		self.queue.put((func, args, kwargs))
-
-	def process_queue(self):
-		while True:
-			try:
-				item = self.queue.get_nowait()
-				if item is None:
-					break
-				func, args, kwargs = item
-				func(*args, **kwargs)
-			except queue.Empty:
-				time.sleep(0.1)  # Sleep for a short period to avoid busy waiting
-
-	def start_processing(self):
-		threading.Thread(target=self.process_queue).start()
-
-	def stop_processing(self):
-		self.queue.put(None)
-		self.thread.join()
 
 
 class App(ctk.CTk):
@@ -161,7 +128,8 @@ class FoldersToCompare(ctk.CTkFrame):
 		self.master.results.set_total_files(total_files)
 		self.master.results.set_time_taken(total_time)
 
-	def browse(self, entry):
+	@staticmethod
+	def browse(entry):
 		file = filedialog.askdirectory()
 		entry.set(file)
 
@@ -179,8 +147,10 @@ class Results(ctk.CTkFrame):
 		self.time_taken_label.pack(padx=(5, 10), pady=0, anchor="w")
 
 		self.total_different_files = 0
-		self.total_different_files_label = ctk.CTkLabel(self.information,
-														text=f"Total Different Files: {self.total_different_files}")
+		self.total_different_files_label = ctk.CTkLabel(
+			self.information,
+			text=f"Total Different Files: {self.total_different_files}"
+		)
 		self.total_different_files_label.pack(padx=(5, 10), pady=(2, 0), anchor="w")
 
 		self.total_files = 0
@@ -210,8 +180,8 @@ class Results(ctk.CTkFrame):
 		self.total_files = number
 		self.total_files_label.configure(text=f"Total Files: {self.total_files}")
 
-	def set_time_taken(self, time):
-		self.time_taken = time
+	def set_time_taken(self, time_taken):
+		self.time_taken = time_taken
 		self.time_taken_label.configure(text=f"Time Taken: {self.time_taken}")
 
 	def reset_everything(self):
