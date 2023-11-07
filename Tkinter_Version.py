@@ -12,20 +12,18 @@ def check_dir_access(directory):
 	return True
 
 
-def create_file_set(directory):
+def create_file_set(directory, subfolders=False):
 	file_set = set()
+	if subfolders:
+		for root, dirs, files in os.walk(directory):
+			for file in files:
+				file_set.add(file)
+		return file_set
+
 	with os.scandir(directory) as dir:
 		for file in dir:
 			if file.is_file():
 				file_set.add(file.name)
-	return file_set
-
-
-def create_file_set_with_subfolders(directory):
-	file_set = set()
-	for root, dirs, files in os.walk(directory):
-		for file in files:
-			file_set.add(file)
 	return file_set
 
 
@@ -37,7 +35,7 @@ class App(ctk.CTk):
 		self.geometry("670x370")
 		self.minsize(670, 370)
 		self.iconbitmap("icon.ico")
-		
+
 		self.results = Results(self)
 		self.folders_to_compare = FoldersToCompare(self)
 		self.menu = MenuBar(self)
@@ -129,15 +127,8 @@ class FoldersToCompare(ctk.CTkFrame):
 			self.results.reset_everything()
 			self.results.edit_result_text("Cannot access dir 2.")
 
-		if get_subfolders:
-			task1 = create_file_set_with_subfolders(dir1)
-			task2 = create_file_set_with_subfolders(dir2)
-		else:
-			task1 = create_file_set(dir1)
-			task2 = create_file_set(dir2)
-
-		list1 = task1
-		list2 = task2
+		list1 = create_file_set(dir1, get_subfolders)
+		list2 = create_file_set(dir2, get_subfolders)
 
 		if not list1:
 			self.results.reset_everything()
