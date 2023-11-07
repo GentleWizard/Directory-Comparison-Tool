@@ -21,24 +21,47 @@ def create_file_set(directory):
 	return file_set
 
 
+def create_file_set_with_subfolders(directory):
+	file_set = set()
+	for root, dirs, files in os.walk(directory):
+		for file in files:
+			file_set.add(file)
+	return file_set
+
+
 class App(ctk.CTk):
 	def __init__(self):
 		super().__init__()
 
 		self.title("Compare Tool")
-		self.geometry("600x300")
+		self.geometry("670x370")
+		self.minsize(670, 370)
 
-		self.folders_to_compare = FoldersToCompare(self)
 		self.results = Results(self)
+		self.folders_to_compare = FoldersToCompare(self)
 
 		self.mainloop()
+
+	def get_results_frame(self):
+		return self.results
+
+	def get_folders_to_compare_frame(self):
+		return self.folders_to_compare
+
+	def get_settings_frame(self):
+		return self.results.settings
+
+	def get_information_frame(self):
+		return self.results.information
 
 
 class FoldersToCompare(ctk.CTkFrame):
 	def __init__(self, master):
 		super().__init__(master, corner_radius=0)
-		self.master = master
 		self.pack(fill="x", side="bottom")
+
+		self.results = master.get_results_frame()
+		self.settings = master.get_settings_frame()
 
 		self.grid_columnconfigure(1, weight=1)
 
@@ -59,7 +82,7 @@ class FoldersToCompare(ctk.CTkFrame):
 		self.copy_button = ctk.CTkButton(
 			self,
 			text="Copy Results",
-			command=self.copy)
+			command=self.results.copy)
 		self.copy_button.grid(row=2, column=2, sticky="nsew", pady=(2, 5), padx=(2, 5))
 
 		self.compare_button = ctk.CTkButton(
@@ -68,42 +91,45 @@ class FoldersToCompare(ctk.CTkFrame):
 			command=self.compare)
 		self.compare_button.grid(row=2, column=1, sticky="nsew", pady=(2, 5), padx=(5, 2))
 
-	def copy(self):
-		data = self.master.results.different_files.get("1.0", "end")
-		pyperclip.copy(data)
-
 	def compare(self):
+		self.results.clear_result()
+
+		get_subfolders = self.settings.get_subfolders_settings_var()
 
 		dir1 = self.dir1_var.get()
 		dir2 = self.dir2_var.get()
 
 		time_elapsed = time.time()
 		if dir1 == dir2:
-			self.master.results.reset_everything()
-			self.master.results.edit_result_text("Cannot compare same directory.")
+			self.results.reset_everything()
+			self.results.edit_result_text("Cannot compare same directory.")
 		if not check_dir_access(dir1):
-			self.master.results.reset_everything()
-			self.master.results.edit_result_text("Cannot access dir 1.")
+			self.results.reset_everything()
+			self.results.edit_result_text("Cannot access dir 1.")
 		if not check_dir_access(dir2):
-			self.master.results.reset_everything()
-			self.master.results.edit_result_text("Cannot access dir 2.")
+			self.results.reset_everything()
+			self.results.edit_result_text("Cannot access dir 2.")
 
-		task1 = create_file_set(dir1)
-		task2 = create_file_set(dir2)
+		if get_subfolders:
+			task1 = create_file_set_with_subfolders(dir1)
+			task2 = create_file_set_with_subfolders(dir2)
+		else:
+			task1 = create_file_set(dir1)
+			task2 = create_file_set(dir2)
 
 		list1 = task1
 		list2 = task2
 
 		if not list1:
-			self.master.results.reset_everything()
-			self.master.results.edit_result_text("No files exist in directory 1.")
+			self.results.reset_everything()
+			self.results.edit_result_text("No files exist in directory 1.")
 		if not list2:
-			self.master.results.reset_everything()
-			self.master.results.edit_result_text("No files exist in directory 2.")
+			self.results.reset_everything()
+			self.results.edit_result_text("No files exist in directory 2.")
 
 		if list1 == list2:
-			self.master.results.reset_everything()
-			self.master.results.edit_result_text("Both directories have the same content.")
+			self.results.reset_everything()
+			self.results.edit_result_text("Both directories have the same content.")
 
 		diff = list1.symmetric_difference(list2)
 
@@ -111,7 +137,7 @@ class FoldersToCompare(ctk.CTkFrame):
 		total_files = len(list1) + len(list2)
 
 		for file in diff:
-			self.master.results.edit_result_text(f"{file}\n")
+			self.results.edit_result_text(f"{file}\n")
 
 		time_taken = round(time.time() - time_elapsed, 2)
 		total_time = ""
@@ -124,9 +150,9 @@ class FoldersToCompare(ctk.CTkFrame):
 			time_taken = round(time_taken / 3600, 2)
 			total_time = f"{time_taken}h"
 
-		self.master.results.set_number_of_files(numdif)
-		self.master.results.set_total_files(total_files)
-		self.master.results.set_time_taken(total_time)
+		self.results.information.set_number_of_files(numdif)
+		self.results.information.set_total_files(total_files)
+		self.results.information.set_time_taken(total_time)
 
 	def browse(self, entry):
 		file = filedialog.askdirectory()
@@ -138,26 +164,18 @@ class Results(ctk.CTkFrame):
 		super().__init__(master, corner_radius=0)
 		self.pack(fill="both", expand=True, side="top")
 
-		self.information = ctk.CTkFrame(self, corner_radius=3)
-		self.information.pack(side="left", fill="both", padx=(5, 0), pady=5, ipadx=5, ipady=5)
+		self.information = Information(self)
+		self.settings = Settings(self)
+		self.settings.hide_settings()
+		self.just_launched = True
 
-		self.time_taken = "0.0s"
-		self.time_taken_label = ctk.CTkLabel(self.information, text=f"Time Taken: {self.time_taken}")
-		self.time_taken_label.pack(padx=(5, 10), pady=0, anchor="w")
-
-		self.total_different_files = 0
-		self.total_different_files_label = ctk.CTkLabel(self.information,
-														text=f"Total Different Files: {self.total_different_files}")
-		self.total_different_files_label.pack(padx=(5, 10), pady=(2, 0), anchor="w")
-
-		self.total_files = 0
-		self.total_files_label = ctk.CTkLabel(self.information, text=f"Total Files: {self.total_files}")
-		self.total_files_label.pack(padx=(5, 10), pady=0, anchor="w")
-
-		self.different_files = ctk.CTkTextbox(self)
+		self.different_files = ctk.CTkTextbox(self, corner_radius=3)
 		self.different_files.insert("end", "")
 		self.different_files.configure(state="disabled", text_color="lightgrey", corner_radius=3)
-		self.different_files.pack(side="right", fill="both", expand=True, padx=(0, 5), pady=5)
+		self.different_files.pack(side="right", fill="both", expand=True, pady=5, padx=(2, 5))
+
+	def get_information_frame(self):
+		return self.information
 
 	def edit_result_text(self, text):
 		self.different_files.configure(state="normal")
@@ -168,6 +186,51 @@ class Results(ctk.CTkFrame):
 		self.different_files.configure(state="normal")
 		self.different_files.delete("1.0", "end")
 		self.different_files.configure(state="disabled")
+
+	def reset_everything(self):
+		self.clear_result()
+		self.information.set_number_of_files(0)
+		self.information.set_total_files(0)
+		self.information.set_time_taken("0.0s")
+
+	def copy(self):
+		data = self.different_files.get("1.0", "end")
+		pyperclip.copy(data)
+
+	def toggle_settings(self):
+		if self.just_launched:
+			self.just_launched = False
+			self.settings.show_settings()
+			self.information.settings_button.configure(text="Hide Settings")
+			return
+		if self.settings.winfo_ismapped():
+			self.settings.hide_settings()
+			self.information.settings_button.configure(text="Show Settings")
+		else:
+			self.settings.show_settings()
+			self.information.settings_button.configure(text="Hide Settings")
+
+
+class Information(ctk.CTkFrame):
+	def __init__(self, master):
+		super().__init__(master, corner_radius=3)
+		self.pack(side="left", fill="both", padx=(5, 2), pady=5, ipadx=5, ipady=5)
+
+		self.time_taken = "0.0s"
+		self.time_taken_label = ctk.CTkLabel(self, text=f"Time Taken: {self.time_taken}")
+		self.time_taken_label.pack(padx=(5, 10), pady=0, anchor="w")
+
+		self.total_different_files = 0
+		self.total_different_files_label = ctk.CTkLabel(self,
+														text=f"Total Different Files: {self.total_different_files}")
+		self.total_different_files_label.pack(padx=(5, 10), pady=(2, 0), anchor="w")
+
+		self.total_files = 0
+		self.total_files_label = ctk.CTkLabel(self, text=f"Total Files: {self.total_files}")
+		self.total_files_label.pack(padx=(5, 10), pady=0, anchor="w")
+
+		self.settings_button = ctk.CTkButton(self, text="Show Settings", command=master.toggle_settings)
+		self.settings_button.pack(side="bottom", pady=5, padx=5)
 
 	def set_number_of_files(self, number):
 		self.total_different_files = number
@@ -181,11 +244,27 @@ class Results(ctk.CTkFrame):
 		self.time_taken = time
 		self.time_taken_label.configure(text=f"Time Taken: {self.time_taken}")
 
-	def reset_everything(self):
-		self.clear_result()
-		self.set_number_of_files(0)
-		self.set_total_files(0)
-		self.set_time_taken("0.0s")
+
+class Settings(ctk.CTkScrollableFrame):
+	def __init__(self, master):
+		super().__init__(master, corner_radius=3, label_text='Settings')
+		self.pack(side="left", fill="both", padx=(0, 5), pady=5)
+		
+		self.check_subfolders_var = ctk.BooleanVar()
+		self.check_subfolders = ctk.CTkCheckBox(self, text="Check Subfolders", variable=self.check_subfolders_var)
+		self.check_subfolders.pack(pady=5, padx=5, anchor="w")
+
+	def hide_settings(self):
+		self.pack_forget()
+
+	def show_settings(self):
+		self.pack(side="left", fill="both", padx=(0, 5), pady=5)
+
+	def get_hidden_files_settings_var(self):
+		return self.check_hidden_files_var.get()
+
+	def get_subfolders_settings_var(self):
+		return self.check_subfolders_var.get()
 
 
 if __name__ == "__main__":
