@@ -1,6 +1,6 @@
 import os
 import time
-from tkinter import filedialog
+from tkinter import filedialog, Menu
 
 import customtkinter as ctk
 import pyperclip
@@ -39,6 +39,12 @@ class App(ctk.CTk):
 
 		self.results = Results(self)
 		self.folders_to_compare = FoldersToCompare(self)
+		self.menu = MenuBar(self)
+		self.menu_visible = False
+
+		self.bind("<Control-s>", lambda event: self.results.save_to_file())
+		self.bind("<Control-r>", lambda event: self.results.reset_everything())
+		self.bind("<Control-m>", lambda event: self.toggle_menu())
 
 		self.mainloop()
 
@@ -53,6 +59,18 @@ class App(ctk.CTk):
 
 	def get_information_frame(self):
 		return self.results.information
+
+	def quit(self):
+		self.destroy()
+
+	def toggle_menu(self):
+		if self.menu_visible:
+			self.menu.destroy()
+			self.menu_visible = False
+		else:
+			self.menu = MenuBar(self)
+			self.config(menu=self.menu)
+			self.menu_visible = True
 
 
 class FoldersToCompare(ctk.CTkFrame):
@@ -210,6 +228,19 @@ class Results(ctk.CTkFrame):
 			self.settings.show_settings()
 			self.information.settings_button.configure(text="Hide Settings")
 
+	def save_to_file(self):
+		save_to = filedialog.asksaveasfile(
+			initialdir="/",
+			title="Save As",
+			filetypes=(("Text Files", "*.txt"), ("All Files", "*.*")),
+			defaultextension=".txt"
+		)
+		if save_to is None:
+			return
+		data = self.different_files.get("1.0", "end")
+		save_to.write(data)
+		save_to.close()
+
 
 class Information(ctk.CTkFrame):
 	def __init__(self, master):
@@ -249,7 +280,7 @@ class Settings(ctk.CTkScrollableFrame):
 	def __init__(self, master):
 		super().__init__(master, corner_radius=3, label_text='Settings')
 		self.pack(side="left", fill="both", padx=(0, 5), pady=5)
-		
+
 		self.check_subfolders_var = ctk.BooleanVar()
 		self.check_subfolders = ctk.CTkCheckBox(self, text="Check Subfolders", variable=self.check_subfolders_var)
 		self.check_subfolders.pack(pady=5, padx=5, anchor="w")
@@ -265,6 +296,34 @@ class Settings(ctk.CTkScrollableFrame):
 
 	def get_subfolders_settings_var(self):
 		return self.check_subfolders_var.get()
+
+
+class MenuBar(Menu):
+	def __init__(self, master):
+		super().__init__(master)
+		self.results = master.get_results_frame()
+		# Create the "File" menu
+		self.file_menu = Menu(self, tearoff=0)
+		self.file_menu.add_command(label="Save As", command=self.results.save_to_file)
+		self.file_menu.add_separator()
+		self.file_menu.add_command(label="Exit", command=master.quit)
+		self.add_cascade(label="File", menu=self.file_menu)
+
+		# Create the "Edit" menu
+		self.edit_menu = Menu(self, tearoff=0)
+		self.edit_menu.add_command(label="Copy", command=self.results.copy)
+		self.add_cascade(label="Edit", menu=self.edit_menu)
+
+		# Create the "View" menu
+		self.view_menu = Menu(self, tearoff=0)
+		self.view_menu.add_command(label="Show/Hide Settings", command=self.results.toggle_settings)
+		self.view_menu.add_command(label="Refresh", command=self.results.reset_everything)
+		self.add_cascade(label="View", menu=self.view_menu)
+
+		# Create the "Help" menu
+		self.help_menu = Menu(self, tearoff=0)
+		self.help_menu.add_command(label="About")
+		self.add_cascade(label="Help", menu=self.help_menu)
 
 
 if __name__ == "__main__":
