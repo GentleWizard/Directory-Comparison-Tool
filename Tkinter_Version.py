@@ -36,7 +36,8 @@ class App(ctk.CTk):
 		self.title("Compare Tool")
 		self.geometry("670x370")
 		self.minsize(670, 370)
-
+		self.iconbitmap("icon.ico")
+		
 		self.results = Results(self)
 		self.folders_to_compare = FoldersToCompare(self)
 		self.menu = MenuBar(self)
