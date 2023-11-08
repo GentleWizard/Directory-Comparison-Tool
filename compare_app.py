@@ -215,7 +215,7 @@ class Results(ctk.CTkFrame):
 		self.different_files = ctk.CTkTextbox(self, corner_radius=3)
 		self.different_files.insert("end", "")
 		self.different_files.configure(state="disabled", text_color="lightgrey", corner_radius=3)
-		self.different_files.pack(side="right", fill="both", expand=True, pady=5, padx=(2, 5))
+		self.different_files.pack(side="right", fill="both", expand=True, pady=5, padx=5)
 
 	def get_information_frame(self):
 		return self.information
@@ -272,23 +272,23 @@ class Results(ctk.CTkFrame):
 class Information(ctk.CTkFrame):
 	def __init__(self, master):
 		super().__init__(master, corner_radius=3)
-		self.pack(side="left", fill="both", padx=(5, 2), pady=5, ipadx=5, ipady=5)
+		self.pack(side="left", fill="both", padx=(5, 0), ipadx=5, ipady=5, pady=5)
 
 		self.time_taken_label = ctk.CTkLabel(self, text=f"Time Taken: 0.0s", text_color="lightgray")
-		self.time_taken_label.pack(padx=(5, 10), pady=0, anchor="w")
+		self.time_taken_label.pack(padx=(5, 10), anchor="w")
 
 		self.status_label = ctk.CTkLabel(self, text=f"Status: Idle", text_color="lightgray")
-		self.status_label.pack(padx=(5, 10), pady=(2, 0), anchor="w")
+		self.status_label.pack(padx=(5, 10), anchor="w")
 
 		self.total_different_files_label = ctk.CTkLabel(self,
 														text=f"Total Different Files: 0", text_color="lightgray")
-		self.total_different_files_label.pack(padx=(5, 10), pady=(2, 0), anchor="w")
+		self.total_different_files_label.pack(padx=(5, 10), anchor="w")
 
 		self.total_files_label = ctk.CTkLabel(self, text=f"Total Files: 0", text_color="lightgray")
-		self.total_files_label.pack(padx=(5, 10), pady=0, anchor="w")
+		self.total_files_label.pack(padx=(5, 10), anchor="w")
 
 		self.settings_button = ctk.CTkButton(self, text="Show Settings", command=master.toggle_settings)
-		self.settings_button.pack(side="bottom", pady=5, padx=5)
+		self.settings_button.pack(side="bottom", padx=5)
 
 	def set_number_of_files(self, number):
 		self.total_different_files_label.configure(text=f"Total Different Files: {number}")
@@ -303,7 +303,7 @@ class Information(ctk.CTkFrame):
 class Settings(ctk.CTkScrollableFrame):
 	def __init__(self, master):
 		super().__init__(master, corner_radius=3, label_text='Settings')
-		self.pack(side="left", fill="both", padx=(0, 5), pady=5)
+		self.pack(side="left", fill="both", pady=5)
 
 		self.check_subfolders_var = ctk.BooleanVar()
 		self.check_subfolders = ctk.CTkCheckBox(self, text="Check Subfolders", variable=self.check_subfolders_var)
