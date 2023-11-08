@@ -4,7 +4,6 @@ from tkinter import filedialog, Menu
 
 import customtkinter as ctk
 import pyperclip
-import winsound
 
 
 def check_dir_access(directory):
@@ -16,8 +15,6 @@ def check_dir_access(directory):
 class App(ctk.CTk):
 	def __init__(self):
 		super().__init__()
-
-		winsound.PlaySound("startup.wav", winsound.SND_ASYNC)
 
 		self.title("Compare Tool")
 		self.geometry("670x370")
@@ -32,11 +29,6 @@ class App(ctk.CTk):
 		self.bind("<Control-s>", lambda event: self.results.save_to_file())
 		self.bind("<Control-r>", lambda event: self.results.reset_everything())
 		self.bind("<Control-m>", lambda event: self.toggle_menu())
-
-		for i in range(251):
-			self.attributes(f"-alpha", i / 250)
-			self.update()
-			time.sleep(0.01)
 
 		self.mainloop()
 
