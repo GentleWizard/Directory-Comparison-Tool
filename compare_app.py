@@ -1,6 +1,6 @@
 import os
 import time
-from tkinter import filedialog, Menu
+from tkinter import filedialog, Menu, messagebox
 
 import customtkinter as ctk
 import pyperclip
@@ -111,28 +111,33 @@ class FoldersToCompare(ctk.CTkFrame):
         dir2 = self.dir2_var.get()
 
         if dir1 == dir2:
-            self.results.reset_everything()
-            self.results.edit_result_text("Cannot compare same directory.")
+            messagebox.showwarning("Warning", "Directories cannot be the same.")
+            self.information.status_label.configure(text="Status: Error", text_color="red")
+            return
         if not check_dir_access(dir1):
-            self.results.reset_everything()
-            self.results.edit_result_text("Cannot access dir 1.")
+            messagebox.showwarning("Warning", "Cannot access dir 1.")
+            self.information.status_label.configure(text="Status: Error", text_color="red")
+            return
         if not check_dir_access(dir2):
-            self.results.reset_everything()
-            self.results.edit_result_text("Cannot access dir 2.")
+            messagebox.showwarning("Warning", "Cannot access dir 2.")
+            self.information.status_label.configure(text="Status: Error", text_color="red")
+            return
 
         list1 = self.create_file_set(dir1, get_subfolders)
         list2 = self.create_file_set(dir2, get_subfolders)
 
         if not list1:
-            self.results.reset_everything()
-            self.results.edit_result_text("No files exist in directory 1.")
+            messagebox.showwarning("Warning", "No files exist in directory 1.")
+            self.information.status_label.configure(text="Status: Error", text_color="red")
+            return
         if not list2:
-            self.results.reset_everything()
-            self.results.edit_result_text("No files exist in directory 2.")
-
+            messagebox.showwarning("Warning", "No files exist in directory 2.")
+            self.information.status_label.configure(text="Status: Error", text_color="red")
+            return
         if list1 == list2:
-            self.results.reset_everything()
-            self.results.edit_result_text("Both directories have the same content.")
+            messagebox.showinfo("Info", "Directories are the same.")
+            self.information.status_label.configure(text="Status: Completed", text_color="green")
+            return
 
         diff = list1.symmetric_difference(list2)
 
@@ -304,7 +309,7 @@ class Settings(ctk.CTkScrollableFrame):
     def __init__(self, master):
         super().__init__(master, corner_radius=3, label_text='Settings')
 
-        self.width = 250
+        self.max_width = 250
         self.check_subfolders_var = ctk.BooleanVar()
         self.check_subfolders = ctk.CTkCheckBox(self, text="Check Subfolders", variable=self.check_subfolders_var)
         self.check_subfolders.pack(pady=5, padx=5, anchor="w")
@@ -313,9 +318,9 @@ class Settings(ctk.CTkScrollableFrame):
 
 
     def hide_settings(self):
-        current_width = self.width
+        current_width = self.max_width
         self.configure(width=current_width)
-        for i in range(200):
+        for i in range(250):
             if current_width == 0:
                 break
             self.configure(width=current_width - 1)
@@ -327,8 +332,8 @@ class Settings(ctk.CTkScrollableFrame):
         self.pack(side="left", fill="both", padx=(0, 5), pady=5)
         current_width = 0
         self.configure(width=current_width)
-        for i in range(200):
-            if current_width == self.width:
+        for i in range(250):
+            if current_width == self.max_width:
                 break
             self.configure(width=current_width + 1)
             current_width += 50
